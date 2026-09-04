@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TillTrack Manager Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .header { background: #007B3C; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h3 { font-size: 0.875rem; color: #666; margin-bottom: 0.5rem; text-transform: uppercase; }
+        .card .value { font-size: 2rem; font-weight: bold; color: #00A650; }
+        .card.flagged .value { color: #e74c3c; }
+        .card.pending .value { color: #f39c12; }
+        table { width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-collapse: collapse; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; font-size: 0.875rem; text-transform: uppercase; color: #666; }
+        .badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-confirmed { background: #d4edda; color: #155724; }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-flagged { background: #f8d7da; color: #721c24; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; }
+        .btn-primary { background: #00A650; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .login-box { max-width: 400px; margin: 5rem auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="loginPage">
+        <div class="login-box">
+            <h2 style="margin-bottom: 1rem; text-align: center;">TillTrack Manager</h2>
+            <input type="text" id="phone" placeholder="Phone (+254700000001)" value="+254700000001">
+            <input type="password" id="pin" placeholder="PIN (1234)" value="1234">
+            <button class="btn btn-primary" style="width:100%" onclick="login()">Login</button>
+            <p id="loginError" style="color: red; margin-top: 1rem; text-align: center;"></p>
+        </div>
+    </div>
+
+    <div id="dashboardPage" class="hidden">
+        <div class="header">
+            <h1>TillTrack Manager Dashboard</h1>
+            <button class="btn btn-primary" onclick="logout()">Logout</button>
+        </div>
+        <div class="container">
+            <div class="grid">
+                <div class="card">
+                    <h3>Today's Revenue</h3>
+                    <div class="value" id="totalRevenue">KES 0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Transactions</h3>
+                    <div class="value" id="totalTransactions">0</div>
+                </div>
+                <div class="card pending">
+                    <h3>Pending</h3>
+                    <div class="value" id="pendingCount">0</div>
+                </div>
+                <div class="card flagged">
+                    <h3>Flagged</h3>
+                    <div class="value" id="flaggedCount">0</div>
+                </div>
+            </div>
+
+            <h2 style="margin-bottom: 1rem;">Server Performance</h2>
+            <table style="margin-bottom: 2rem;">
+                <thead><tr><th>Server</th><th>Sales</th><th>Transactions</th></tr></thead>
+                <tbody id="serverStats"></tbody>
+            </table>
+
+            <h2 style="margin-bottom: 1rem;">Flagged Transactions</h2>
+            <table>
+                <thead><tr><th>Server</th><th>Amount</th><th>Reason</th><th>Action</th></tr></thead>
+                <tbody id="flaggedTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let token = localStorage.getItem('token');
+
+        if (token) showDashboard();
+
+        async function login() {
+            const phone = document.getElementById('phone').value;
+            const pin = document.getElementById('pin').value;
+            try {
+                const res = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({phone, pin})
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    token = data.access_token;
+                    localStorage.setItem('token', token);
+                    showDashboard();
+                } else {
+                    document.getElementById('loginError').textContent = data.detail || 'Login failed';
+                }
+            } catch (e) {
+                document.getElementById('loginError').textContent = 'Server error';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            location.reload();
+        }
+
+        function showDashboard() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+            loadDashboard();
+            setInterval(loadDashboard, 10000);
+        }
+
+        async function loadDashboard() {
+            const res = await fetch(`${API_URL}/api/manager/dashboard`, {
+                headers: {'Authorization': `Bearer ${token}`}
+            });
+            if (!res.ok) { logout(); return; }
+            const data = await res.json();
+
+            document.getElementById('totalRevenue').textContent = `KES ${data.total_revenue_today.toFixed(2)}`;
+            document.getElementById('totalTransactions').textContent = data.total_transactions_today;
+            document.getElementById('pendingCount').textContent = data.pending_count;
+            document.getElementById('flaggedCount').textContent = data.flagged_count;
+
+            document.getElementById('serverStats').innerHTML = data.server_stats.map(s => `
+                <tr><td>${s.name}</td><td>KES ${s.total_sales.toFixed(2)}</td><td>${s.transaction_count}</td></tr>
+            `).join('');
+
+            document.getElementById('flaggedTable').innerHTML = data.flagged_transactions.map(t => `
+                <tr>
+                    <td>${t.staff_name}</td>
+                    <td>KES ${t.amount.toFixed(2)}</td>
+                    <td>${t.failure_reason || 'Unknown'}</td>
+                    <td><button class="btn btn-warning" onclick="reconcile('${t.id}')">Fix</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function reconcile(id) {
+            await fetch(`${API_URL}/api/manager/reconcile`, {
+                method: 'POST',
+                headers: {'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json'},
+                body: JSON.stringify({transaction_id: id})
+            });
+            loadDashboard();
+        }
+    </script>
+</body>
+</html>

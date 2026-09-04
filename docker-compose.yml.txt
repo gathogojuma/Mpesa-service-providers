@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: tilltrack
+      POSTGRES_PASSWORD: tilltrack123
+      POSTGRES_DB: tilltrack
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tilltrack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://tilltrack:tilltrack123@db:5432/tilltrack
+      SECRET_KEY: "your-super-secret-key-change-in-production"
+      MOCK_MPESA: "true"
+      MPESA_CONSUMER_KEY: "mock_key"
+      MPESA_CONSUMER_SECRET: "mock_secret"
+      MPESA_PASSKEY: "mock_passkey"
+      MPESA_SHORTCODE: "174379"
+      MPESA_CALLBACK_URL: "http://localhost:8000/api/payments/callback"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  web-dashboard:
+    build: ./frontend/web_dashboard
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
