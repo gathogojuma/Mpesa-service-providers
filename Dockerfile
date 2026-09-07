@@ -15,15 +15,13 @@ WORKDIR /app
 
 # Copy requirements file
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the backend code
-COPY backend/ .
+# Copy the entire backend folder (not just its contents)
+COPY backend/ /app/
 
-# Set the working directory to where the app is
-WORKDIR /app
+# Set the working directory to where the app code is
+WORKDIR /app/backend
 
 # Command to run the app
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
