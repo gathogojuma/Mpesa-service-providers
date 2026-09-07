@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TillTrack Manager Dashboard</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                sans-serif;
+            background: #f5f5f5;
+        }
+
+        /* Header */
+        .header {
+            background: #007b3c;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Cards grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .card h3 {
+            font-size: 0.875rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00a650;
+        }
+        .card.flagged .value {
+            color: #e74c3c;
+        }
+        .card.pending .value {
+            color: #f39c12;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #666;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: #00a650;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #008c44;
+        }
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #d68910;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        /* Login form */
+        .login-box {
+            max-width: 400px;
+            margin: 5rem auto;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .login-box h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #007b3c;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .login-box input:focus {
+            outline: none;
+            border-color: #00a650;
+        }
+
+        /* Utility */
+        .hidden {
+            display: none !important;
+        }
+
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-flagged {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .header {
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 1rem;
+            }
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .container {
+                padding: 0 0.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Page -->
+    <div id="loginPage">
+        <div class="login-box">
+            <h2>🚀 TillTrack Manager</h2>
+            <input type="text" id="phone" placeholder="Phone (e.g., +254700000001)" value="+254700000001" />
+            <input type="password" id="pin" placeholder="PIN (e.g., 1234)" value="1234" />
+            <button class="btn btn-primary" style="width: 100%" onclick="login()">
+                Login
+            </button>
+            <p id="loginError" class="error"></p>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardPage" class="hidden">
+        <div class="header">
+            <h1>📊 TillTrack Manager Dashboard</h1>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="container">
+            <!-- Summary Cards -->
+            <div class="grid">
+                <div class="card">
+                    <h3>Today's Revenue</h3>
+                    <div class="value" id="totalRevenue">KES 0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Transactions</h3>
+                    <div class="value" id="totalTransactions">0</div>
+                </div>
+                <div class="card pending">
+                    <h3>Pending</h3>
+                    <div class="value" id="pendingCount">0</div>
+                </div>
+                <div class="card flagged">
+                    <h3>Flagged</h3>
+                    <div class="value" id="flaggedCount">0</div>
+                </div>
+            </div>
+
+            <!-- Server Performance -->
+            <h2 class="section-title">👨‍💼 Server Performance</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Server</th>
+                        <th>Sales</th>
+                        <th>Transactions</th>
+                    </tr>
+                </thead>
+                <tbody id="serverStats">
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #999">
+                            Loading...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Flagged Transactions -->
+            <h2 class="section-title">⚠️ Flagged Transactions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Server</th>
+                        <th>Amount</th>
+                        <th>Reason</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="flaggedTable">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #999">
+                            No flagged transactions
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_URL = "https://mpesa-service-backend.onrender.com";
+        let token = localStorage.getItem("token");
+
+        // Auto-login if token exists
+        if (token) {
+            showDashboard();
+        }
+
+        // Login function
+        async function login() {
+            const phone = document.getElementById("phone").value.trim();
+            const pin = document.getElementById("pin").value.trim();
+            const errorEl = document.getElementById("loginError");
+
+            if (!phone || !pin) {
+                errorEl.textContent = "Please enter both phone and PIN.";
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone, pin }),
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    token = data.access_token;
+                    localStorage.setItem("token", token);
+                    errorEl.textContent = "";
+                    showDashboard();
+                } else {
+                    errorEl.textContent = data.detail || "Login failed. Please check your credentials.";
+                }
+            } catch (err) {
+                errorEl.textContent = "Network error. Please try again.";
+                console.error("Login error:", err);
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem("token");
+            token = null;
+            document.getElementById("loginPage").classList.remove("hidden");
+            document.getElementById("dashboardPage").classList.add("hidden");
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            document.getElementById("loginPage").classList.add("hidden");
+            document.getElementById("dashboardPage").classList.remove("hidden");
+            loadDashboard();
+            setInterval(loadDashboard, 15000); // refresh every 15 seconds
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                const res = await fetch(`${API_URL}/api/manager/dashboard`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        logout();
+                        return;
+                    }
+                    throw new Error(`HTTP ${res.status}`);
+                }
+
+                const data = await res.json();
+
+                // Update summary cards
+                document.getElementById("totalRevenue").textContent =
+                    `KES ${data.total_revenue_today.toFixed(2)}`;
+                document.getElementById("totalTransactions").textContent =
+                    data.total_transactions_today;
+                document.getElementById("pendingCount").textContent =
+                    data.pending_count;
+                document.getElementById("flaggedCount").textContent =
+                    data.flagged_count;
+
+                // Update server stats
+                const serverStats = document.getElementById("serverStats");
+                if (data.server_stats && data.server_stats.length > 0) {
+                    serverStats.innerHTML = data.server_stats
+                        .map(
+                            (s) => `
+                            <tr>
+                                <td><strong>${s.name}</strong></td>
+                                <td>KES ${s.total_sales.toFixed(2)}</td>
+                                <td>${s.transaction_count}</td>
+                            </tr>
+                        `
+                        )
+                        .join("");
+                } else {
+                    serverStats.innerHTML = `
+                        <tr>
+                            <td colspan="3" style="text-align:center;color:#999">
+                                No server data available
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                // Update flagged transactions
+                const flaggedTable = document.getElementById("flaggedTable");
+                if (data.flagged_transactions && data.flagged_transactions.length > 0) {
+                    flaggedTable.innerHTML = data.flagged_transactions
+                        .map(
+                            (t) => `
+                            <tr>
+                                <td>${t.staff_name || "Unknown"}</td>
+                                <td>KES ${t.amount.toFixed(2)}</td>
+                                <td>${t.failure_reason || "Flagged"}</td>
+                                <td>
+                                    <button class="btn btn-warning" onclick="reconcile('${t.id}')">
+                                        Fix
+                                    </button>
+                                </td>
+                            </tr>
+                        `
+                        )
+                        .join("");
+                } else {
+                    flaggedTable.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align:center;color:#999">
+                                ✅ No flagged transactions
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (err) {
+                console.error("Dashboard load error:", err);
+                // Don't logout on network errors, just retry next interval
+            }
+        }
+
+        // Reconcile a flagged transaction
+        async function reconcile(transactionId) {
+            if (!confirm("Confirm you want to fix this transaction?")) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/manager/reconcile`, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        transaction_id: transactionId,
+                        notes: "Manually reconciled via dashboard",
+                    }),
+                });
+
+                if (res.ok) {
+                    alert("✅ Transaction reconciled successfully!");
+                    loadDashboard();
+                } else {
+                    const data = await res.json();
+                    alert(`❌ Failed: ${data.detail || "Unknown error"}`);
+                }
+            } catch (err) {
+                alert("❌ Network error. Please try again.");
+                console.error("Reconcile error:", err);
+            }
+        }
+
+        // Allow Enter key to login
+        document.addEventListener("DOMContentLoaded", () => {
+            const inputs = document.querySelectorAll("#loginPage input");
+            inputs.forEach((input) => {
+                input.addEventListener("keypress", (e) => {
+                    if (e.key === "Enter") login();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
