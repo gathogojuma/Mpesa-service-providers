@@ -6,11 +6,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire backend folder
-COPY backend /app
+# Copy the entire backend folder into /app
+COPY backend/ /app/
 
-# Make sure we can find the app
-ENV PYTHONPATH=/app
+# List files for debugging (remove this later)
+RUN ls -la /app
 
 # Run the app
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
