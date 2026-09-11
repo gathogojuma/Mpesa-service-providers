@@ -1,94 +1,89 @@
-from datetime import datetime, timedelta
-from typing import Optional
-from jose import JWTError, jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from .database import get_db
-from .models import Staff
-from .config import settings
+from sqlalchemy.exc import IntegrityError
+from ..database import get_db
+from ..models import Staff, Business
+from ..schemas import StaffLogin, StaffRegister, StaffResponse, TokenResponse
+from ..auth import verify_password, get_password_hash, create_access_token
 
-# Use HTTPBearer for simplified Swagger UI (instead of OAuth2PasswordBearer)
-oauth2_scheme = HTTPBearer()
-
-SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 hours
+router = APIRouter()
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password."""
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    """Hash a password using bcrypt."""
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    return pwd_context.hash(password)
-
-
-def create_access_token(
-    data: dict,
-    business_id: Optional[str] = None,
-    expires_delta: Optional[timedelta] = None
+@router.post("/login", response_model=TokenResponse)
+async def login(
+    credentials: StaffLogin,
+    db: Session = Depends(get_db)
 ):
     """
-    Create a JWT access token.
+    Authenticate a staff member and issue a JWT containing tenant context.
 
-    Args:
-        data: Dictionary of claims to encode (must include "sub" = staff.id)
-        business_id: UUID string of the business (tenant). Embedded as
-                     "business_id" claim for multi-tenant filtering.
-        expires_delta: Optional custom expiration time.
-
-    Returns:
-        Encoded JWT string.
+    The `business_id` is derived from the Staff record in the database,
+    since the user doesn't have a token yet at login time.
     """
-    to_encode = data.copy()
+    # Find staff by phone
+    staff = db.query(Staff).filter(Staff.phone == credentials.phone).first()
+    if not staff or not verify_password(credentials.pin, staff.pin_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid phone or PIN"
+        )
 
-    # Embed tenant context if provided
-    if business_id is not None:
-        to_encode["business_id"] = business_id
+    # Create access token WITH tenant context
+    access_token = create_access_token(
+        data={"sub": staff.id},
+        business_id=staff.business_id,
+    )
 
-    # Set expiration
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "staff": staff,
+    }
 
 
-async def get_current_staff(
-    credentials=Depends(oauth2_scheme),
+@router.post("/register", response_model=StaffResponse)
+async def register(
+    staff_data: StaffRegister,
     db: Session = Depends(get_db)
-) -> Staff:
+):
     """
-    Decode the JWT and return the authenticated Staff record.
+    Register a new staff member.
 
-    Raises 401 if the token is invalid or the staff member doesn't exist.
+    If no business_id is provided, a new Business is created and the
+    staff member is assigned to it (useful for onboarding a new tenant).
     """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+    # Check if business exists
+    if staff_data.business_id:
+        business = db.query(Business).filter(Business.id == staff_data.business_id).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Business not found")
+    else:
+        # Create new business (new tenant)
+        business = Business(
+            name=f"{staff_data.name}'s Business",
+            phone=staff_data.phone
+        )
+        db.add(business)
+        db.commit()
+        db.refresh(business)
+        staff_data.business_id = business.id
+
+    # Create staff
+    staff = Staff(
+        name=staff_data.name,
+        phone=staff_data.phone,
+        pin_hash=get_password_hash(staff_data.pin),
+        role=staff_data.role,
+        business_id=staff_data.business_id
     )
     try:
-        token = credentials.credentials
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        staff_id: str = payload.get("sub")
-        if staff_id is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-
-    staff = db.query(Staff).filter(Staff.id == staff_id).first()
-    if staff is None:
-        raise credentials_exception
-
+        db.add(staff)
+        db.commit()
+        db.refresh(staff)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Phone number already registered"
+        )
     return staff
