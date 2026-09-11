@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, timedelta
 from ..database import get_db
 from ..models import Transaction, Staff, TransactionStatus
 from ..schemas import TransactionResponse
 from ..auth import get_current_staff
+from ..utils.timezone import today_start_local, today_end_local
 
 router = APIRouter()
 
@@ -15,9 +15,9 @@ async def get_my_sales(
     db: Session = Depends(get_db),
     current_staff: Staff = Depends(get_current_staff)
 ):
-    """Return the current staff member's confirmed sales for today."""
-    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    tomorrow = today + timedelta(days=1)
+    """Return the current staff member's confirmed sales for today (local time)."""
+    today = today_start_local()
+    tomorrow = today_end_local()
 
     sales = db.query(Transaction).filter(
         Transaction.staff_id == current_staff.id,
@@ -53,10 +53,10 @@ async def get_transactions(
     """
     query = db.query(Transaction)
 
-    # Tenant scoping: always filter by business_id
+    # Tenant scoping
     query = query.filter(Transaction.business_id == current_staff.business_id)
 
-    # Role-based scoping: servers only see their own transactions
+    # Role-based scoping
     if current_staff.role != "manager":
         query = query.filter(Transaction.staff_id == current_staff.id)
 
@@ -68,7 +68,6 @@ async def get_transactions(
 
     transactions = query.order_by(Transaction.initiated_at.desc()).limit(limit).all()
 
-    # Attach staff names
     for t in transactions:
         if t.staff:
             t.staff_name = t.staff.name
