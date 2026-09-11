@@ -9,11 +9,13 @@ from ..auth import get_current_staff
 
 router = APIRouter()
 
+
 @router.get("/my-sales")
 async def get_my_sales(
     db: Session = Depends(get_db),
     current_staff: Staff = Depends(get_current_staff)
 ):
+    """Return the current staff member's confirmed sales for today."""
     today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow = today + timedelta(days=1)
 
@@ -34,6 +36,7 @@ async def get_my_sales(
         "transactions": sales.all()
     }
 
+
 @router.get("/", response_model=list[TransactionResponse])
 async def get_transactions(
     staff_id: str = None,
@@ -42,11 +45,22 @@ async def get_transactions(
     db: Session = Depends(get_db),
     current_staff: Staff = Depends(get_current_staff)
 ):
+    """
+    List transactions with tenant-scoped access control.
+
+    - Managers see ALL transactions in their business.
+    - Servers see only their OWN transactions.
+    """
     query = db.query(Transaction)
 
+    # Tenant scoping: always filter by business_id
+    query = query.filter(Transaction.business_id == current_staff.business_id)
+
+    # Role-based scoping: servers only see their own transactions
     if current_staff.role != "manager":
         query = query.filter(Transaction.staff_id == current_staff.id)
 
+    # Optional filters
     if staff_id:
         query = query.filter(Transaction.staff_id == staff_id)
     if status:
@@ -54,7 +68,7 @@ async def get_transactions(
 
     transactions = query.order_by(Transaction.initiated_at.desc()).limit(limit).all()
 
-    # Add staff names
+    # Attach staff names
     for t in transactions:
         if t.staff:
             t.staff_name = t.staff.name
