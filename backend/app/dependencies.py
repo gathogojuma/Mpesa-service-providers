@@ -4,18 +4,18 @@ from fastapi.security import HTTPBearer
 from .config import settings
 from .auth import SECRET_KEY, ALGORITHM
 
-# Reuse the same HTTPBearer scheme from auth
+# Reuse HTTPBearer scheme for token extraction
 _bearer_scheme = HTTPBearer()
 
 
 async def get_current_business_id(
-    credentials = Depends(_bearer_scheme),
+    credentials=Depends(_bearer_scheme),
 ) -> str:
     """
     Extract and validate the `business_id` claim from the JWT.
 
-    This dependency is intended for endpoints that need the tenant context
-    but do not need the full Staff object.
+    Use this dependency on endpoints that need the tenant context
+    but don't need the full Staff object.
 
     Raises:
         401 if the token is invalid, missing, or lacks the business_id claim.
