@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
 import csv
 from io import StringIO
 from fastapi.responses import StreamingResponse
 from ..database import get_db
 from ..models import Transaction, Staff, TransactionStatus
 from ..auth import get_current_staff
+from ..utils.timezone import today_start_local, today_end_local
 
 router = APIRouter()
+
 
 @router.get("/shift")
 async def export_shift_report(
@@ -21,8 +22,8 @@ async def export_shift_report(
             detail="Only managers can export reports"
         )
 
-    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    tomorrow = today + timedelta(days=1)
+    today = today_start_local()
+    tomorrow = today_end_local()
 
     transactions = db.query(Transaction).filter(
         Transaction.business_id == current_staff.business_id,
