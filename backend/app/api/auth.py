@@ -8,11 +8,18 @@ from ..auth import verify_password, get_password_hash, create_access_token
 
 router = APIRouter()
 
+
 @router.post("/login", response_model=TokenResponse)
 async def login(
     credentials: StaffLogin,
     db: Session = Depends(get_db)
 ):
+    """
+    Authenticate a staff member and issue a JWT containing tenant context.
+
+    The `business_id` is derived from the Staff record in the database,
+    since the user doesn't have a token yet at login time.
+    """
     # Find staff by phone
     staff = db.query(Staff).filter(Staff.phone == credentials.phone).first()
     if not staff or not verify_password(credentials.pin, staff.pin_hash):
@@ -21,26 +28,37 @@ async def login(
             detail="Invalid phone or PIN"
         )
 
-    # Create access token
-    access_token = create_access_token(data={"sub": staff.id})
+    # Create access token WITH tenant context
+    access_token = create_access_token(
+        data={"sub": staff.id},
+        business_id=staff.business_id,
+    )
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "staff": staff
+        "staff": staff,
     }
+
 
 @router.post("/register", response_model=StaffResponse)
 async def register(
     staff_data: StaffRegister,
     db: Session = Depends(get_db)
 ):
+    """
+    Register a new staff member.
+
+    If no business_id is provided, a new Business is created and the
+    staff member is assigned to it (useful for onboarding a new tenant).
+    """
     # Check if business exists
     if staff_data.business_id:
         business = db.query(Business).filter(Business.id == staff_data.business_id).first()
         if not business:
             raise HTTPException(status_code=404, detail="Business not found")
     else:
-        # Create new business
+        # Create new business (new tenant)
         business = Business(
             name=f"{staff_data.name}'s Business",
             phone=staff_data.phone
