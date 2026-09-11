@@ -40,7 +40,8 @@ def create_access_token(
 
     Args:
         data: Dictionary of claims to encode (must include "sub" = staff.id)
-        business_id: UUID string of the business (tenant). Embedded as "business_id" claim.
+        business_id: UUID string of the business (tenant). Embedded as
+                     "business_id" claim for multi-tenant filtering.
         expires_delta: Optional custom expiration time.
 
     Returns:
