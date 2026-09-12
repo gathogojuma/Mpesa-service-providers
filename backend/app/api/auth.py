@@ -17,10 +17,9 @@ async def login(
     """
     Authenticate a staff member and issue a JWT containing tenant context.
 
-    The `business_id` is derived from the Staff record in the database,
-    since the user doesn't have a token yet at login time.
+    `business_id` is derived from the Staff record in the DB.
+    Platform admins have no business_id (they operate cross-tenant).
     """
-    # Find staff by phone
     staff = db.query(Staff).filter(Staff.phone == credentials.phone).first()
     if not staff or not verify_password(credentials.pin, staff.pin_hash):
         raise HTTPException(
@@ -28,9 +27,8 @@ async def login(
             detail="Invalid phone or PIN"
         )
 
-    # Create access token WITH tenant context
     access_token = create_access_token(
-        data={"sub": staff.id},
+        data={"sub": staff.id, "role": staff.role},
         business_id=staff.business_id,
     )
 
@@ -49,32 +47,38 @@ async def register(
     """
     Register a new staff member.
 
-    If no business_id is provided, a new Business is created and the
-    staff member is assigned to it (useful for onboarding a new tenant).
+    If no business_id is provided and the role is 'manager', a new
+    Business is created automatically (useful for onboarding a tenant).
     """
-    # Check if business exists
     if staff_data.business_id:
-        business = db.query(Business).filter(Business.id == staff_data.business_id).first()
+        business = db.query(Business).filter(
+            Business.id == staff_data.business_id
+        ).first()
         if not business:
             raise HTTPException(status_code=404, detail="Business not found")
-    else:
-        # Create new business (new tenant)
+    elif staff_data.role == "manager":
+        # Only managers can create a business on signup
         business = Business(
             name=f"{staff_data.name}'s Business",
-            phone=staff_data.phone
+            phone=staff_data.phone,
+            mpesa_till=f"TEMP-{staff_data.phone[-6:]}",  # placeholder; update later
         )
         db.add(business)
         db.commit()
         db.refresh(business)
         staff_data.business_id = business.id
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="business_id is required for non-manager roles"
+        )
 
-    # Create staff
     staff = Staff(
         name=staff_data.name,
         phone=staff_data.phone,
         pin_hash=get_password_hash(staff_data.pin),
         role=staff_data.role,
-        business_id=staff_data.business_id
+        business_id=staff_data.business_id,
     )
     try:
         db.add(staff)
