@@ -44,30 +44,6 @@ async def health_check():
 
 
 @app.get("/seed-demo-data")
-@app.get("/drop-tables")
-async def drop_tables():
-    """
-    Temporary endpoint to drop old tables. Delete this after use.
-    """
-    from sqlalchemy import text
-    db = SessionLocal()
-    dropped = []
-    try:
-        tables = ["usage_stats", "subscriptions", "staff", "businesses",
-                  "commissions", "payouts", "reconciliation_logs", "transactions"]
-        for table in tables:
-            try:
-                db.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE"))
-                dropped.append(table)
-            except Exception as e:
-                dropped.append(f"{table}: {str(e)[:50]}")
-        db.commit()
-        return {"status": "ok", "dropped": dropped}
-    except Exception as e:
-        db.rollback()
-        return {"status": "error", "message": str(e)}
-    finally:
-        db.close()
 async def seed_demo_data():
     """
     Idempotent seed endpoint for the subscription-based TillTrack schema.
@@ -75,7 +51,7 @@ async def seed_demo_data():
     Creates (or updates):
     - 1 platform admin (you, the operator)
     - 1 demo business (a bar) with a Safaricom Till
-    - 2 staff members for the demo business (manager + server)
+    - 3 staff members for the demo business (manager + 2 servers)
     - 1 active subscription for the demo business
     - 30 days of random usage stats so the insights look real
 
@@ -91,8 +67,6 @@ async def seed_demo_data():
         admin_phone = "+254700000099"
         admin = db.query(Staff).filter(Staff.phone == admin_phone).first()
         if not admin:
-            # Platform admin is not tied to a business
-            # (we allow business_id to be NULL for platform admins)
             admin = Staff(
                 name="Platform Admin",
                 phone=admin_phone,
@@ -132,7 +106,7 @@ async def seed_demo_data():
             actions.append(f"Business already exists: {business.name}")
 
         # ─────────────────────────────────────────────────────────────
-        # 3. Demo Staff (manager + server) tied to the business
+        # 3. Demo Staff (manager + servers) tied to the business
         # ─────────────────────────────────────────────────────────────
         demo_staff = [
             ("Demo Manager", "+254700000001", "manager"),
@@ -221,11 +195,23 @@ async def seed_demo_data():
             avg_amount = random.uniform(300, 900)
             total_value = round(total_count * avg_amount, 2)
 
+            # Split the totals into source breakdowns (mostly 'app' for demo)
+            app_count = int(total_count * 0.7)
+            c2b_count = total_count - app_count
+            app_value = round(total_value * 0.7, 2)
+            c2b_value = round(total_value - app_value, 2)
+
             stat = UsageStat(
                 business_id=business.id,
                 stat_date=stat_date,
                 transaction_count=total_count,
                 total_value=total_value,
+                app_count=app_count,
+                app_value=app_value,
+                c2b_count=c2b_count,
+                c2b_value=c2b_value,
+                cash_count=0,
+                cash_value=0.0,
                 unique_servers=random.randint(2, 3),
                 hourly_counts=__import__("json").dumps(hourly),
             )
