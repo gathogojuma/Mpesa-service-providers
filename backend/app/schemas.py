@@ -1,11 +1,16 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
-from .models import TransactionStatus
+
+
+# ─────────────────────────────────────────────
+# Auth
+# ─────────────────────────────────────────────
 
 class StaffLogin(BaseModel):
     phone: str
     pin: str
+
 
 class StaffRegister(BaseModel):
     name: str
@@ -14,45 +19,92 @@ class StaffRegister(BaseModel):
     role: str
     business_id: Optional[str] = None
 
+
 class StaffResponse(BaseModel):
     id: str
     name: str
     phone: str
     role: str
-    business_id: str
+    business_id: Optional[str]
     created_at: datetime
 
-class PaymentInitiate(BaseModel):
-    amount: float
-    customer_phone: str
-    table_number: Optional[str] = None
+    class Config:
+        from_attributes = True
 
-class TransactionResponse(BaseModel):
-    id: str
-    staff_id: str
-    business_id: str
-    mpesa_transaction_id: Optional[str]
-    amount: float
-    customer_phone: str
-    status: TransactionStatus
-    initiated_at: datetime
-    confirmed_at: Optional[datetime]
-    table_number: Optional[str]
-    staff_name: Optional[str] = None
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     staff: StaffResponse
 
-class DashboardResponse(BaseModel):
-    total_revenue_today: float
-    total_transactions_today: int
-    pending_count: int
-    flagged_count: int
-    server_stats: List[dict]
-    flagged_transactions: List[dict]
 
-class ReconcileRequest(BaseModel):
-    transaction_id: str
-    notes: Optional[str] = None
+# ─────────────────────────────────────────────
+# Business (used by platform admin endpoints)
+# ─────────────────────────────────────────────
+
+class BusinessResponse(BaseModel):
+    id: str
+    name: str
+    phone: str
+    mpesa_till: Optional[str]
+    category: Optional[str]
+    location_name: Optional[str]
+    latitude: Optional[float]
+    longitude: Optional[float]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ─────────────────────────────────────────────
+# Subscription
+# ─────────────────────────────────────────────
+
+class SubscriptionResponse(BaseModel):
+    id: str
+    business_id: str
+    plan: str
+    monthly_fee: float
+    transaction_limit: Optional[int]
+    status: str
+    current_period_start: datetime
+    current_period_end: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ─────────────────────────────────────────────
+# Insights
+# ─────────────────────────────────────────────
+
+class PeakHour(BaseModel):
+    hour: int
+    count: int
+
+
+class DailyTrendPoint(BaseModel):
+    date: str
+    count: int
+    value: float
+
+
+# ─────────────────────────────────────────────
+# Webhook payloads
+# ─────────────────────────────────────────────
+
+class MpesaCallbackPayload(BaseModel):
+    """
+    Loosely-typed incoming M-Pesa callback.
+
+    We only read a handful of fields; the rest are ignored.
+    """
+    BusinessShortCode: Optional[str] = None
+    TillNumber: Optional[str] = None
+    ShortCode: Optional[str] = None
+    TransAmount: Optional[float] = None
+    Amount: Optional[float] = None
+    TransID: Optional[str] = None
+    TransactionType: Optional[str] = None
+    TransTime: Optional[str] = None
