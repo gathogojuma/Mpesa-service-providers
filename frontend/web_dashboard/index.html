@@ -3,21 +3,17 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TillTrack Manager Dashboard</title>
+    <title>TillTrack Dashboard</title>
     <style>
-        /* Reset and base styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: #f5f5f5;
+            color: #333;
         }
 
-        /* Header */
+        /* ─── Header ──────────────────────────────────────────── */
         .header {
             background: #007b3c;
             color: white;
@@ -26,64 +22,98 @@
             justify-content: space-between;
             align-items: center;
         }
-        .header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
+        .header h1 { font-size: 1.25rem; font-weight: 600; }
+        .header .user-info { display: flex; align-items: center; gap: 1rem; font-size: 0.875rem; }
+        .header .role-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        /* Container */
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
+        /* ─── Container ───────────────────────────────────────── */
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
 
-        /* Cards grid */
+        /* ─── Login ───────────────────────────────────────────── */
+        .login-box {
+            max-width: 400px;
+            margin: 5rem auto;
+            background: white;
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .login-box h2 { text-align: center; margin-bottom: 1.5rem; color: #007b3c; }
+        .login-box input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .login-box input:focus { outline: none; border-color: #00a650; }
+        .error { color: #e74c3c; text-align: center; margin-top: 1rem; font-size: 0.9rem; }
+
+        /* ─── Buttons ─────────────────────────────────────────── */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+        .btn-primary { background: #00a650; color: white; }
+        .btn-primary:hover { background: #008c44; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+
+        /* ─── Cards ───────────────────────────────────────────── */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
             margin-bottom: 2rem;
         }
-
         .card {
             background: white;
             padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             text-align: center;
         }
         .card h3 {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             color: #666;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 0.5rem;
         }
-        .card .value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #00a650;
-        }
-        .card.flagged .value {
-            color: #e74c3c;
-        }
-        .card.pending .value {
-            color: #f39c12;
-        }
+        .card .value { font-size: 1.75rem; font-weight: bold; color: #00a650; }
+        .card.pending .value { color: #f39c12; }
+        .card.warning .value { color: #e74c3c; }
 
-        /* Tables */
-        table {
-            width: 100%;
+        /* ─── Sections ────────────────────────────────────────── */
+        .section {
             background: white;
+            padding: 1.5rem;
             border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            border-collapse: collapse;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             margin-bottom: 2rem;
         }
-        th,
-        td {
+        .section h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        /* ─── Tables ──────────────────────────────────────────── */
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
             padding: 0.75rem 1rem;
             text-align: left;
             border-bottom: 1px solid #eee;
@@ -95,87 +125,16 @@
             text-transform: uppercase;
             color: #666;
         }
-        tr:hover {
-            background: #f8f9fa;
-        }
+        tr:hover { background: #fafafa; }
 
-        /* Buttons */
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: background 0.2s;
-        }
-        .btn-primary {
-            background: #00a650;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #008c44;
-        }
-        .btn-warning {
-            background: #f39c12;
-            color: white;
-        }
-        .btn-warning:hover {
-            background: #d68910;
-        }
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-        .btn-danger:hover {
-            background: #c0392b;
-        }
+        /* ─── Bar chart (simple CSS) ──────────────────────────── */
+        .bar-chart { display: flex; align-items: flex-end; gap: 2px; height: 150px; margin-top: 1rem; }
+        .bar { flex: 1; background: #00a650; border-radius: 2px 2px 0 0; min-height: 2px; position: relative; }
+        .bar:hover { background: #008c44; }
+        .bar-labels { display: flex; gap: 2px; margin-top: 4px; font-size: 0.6rem; color: #999; }
+        .bar-labels span { flex: 1; text-align: center; }
 
-        /* Login form */
-        .login-box {
-            max-width: 400px;
-            margin: 5rem auto;
-            background: white;
-            padding: 2.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .login-box h2 {
-            text-align: center;
-            margin-bottom: 1.5rem;
-            color: #007b3c;
-        }
-        .login-box input {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        .login-box input:focus {
-            outline: none;
-            border-color: #00a650;
-        }
-
-        /* Utility */
-        .hidden {
-            display: none !important;
-        }
-
-        .error {
-            color: #e74c3c;
-            text-align: center;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #333;
-        }
-
+        /* ─── Badges ──────────────────────────────────────────── */
         .badge {
             display: inline-block;
             padding: 0.2rem 0.6rem;
@@ -184,303 +143,400 @@
             font-weight: 600;
             text-transform: uppercase;
         }
-        .badge-confirmed {
-            background: #d4edda;
-            color: #155724;
-        }
-        .badge-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-        .badge-flagged {
-            background: #f8d7da;
-            color: #721c24;
-        }
+        .badge-active { background: #d4edda; color: #155724; }
+        .badge-inactive { background: #f8d7da; color: #721c24; }
 
-        /* Responsive */
-        @media (max-width: 600px) {
-            .header {
-                flex-direction: column;
-                gap: 0.5rem;
-                padding: 1rem;
-            }
-            .grid {
-                grid-template-columns: 1fr 1fr;
-            }
-            .container {
-                padding: 0 0.5rem;
-            }
-        }
+        /* ─── Utility ─────────────────────────────────────────── */
+        .hidden { display: none !important; }
+        .muted { color: #999; font-size: 0.875rem; text-align: center; padding: 1rem; }
     </style>
 </head>
-
 <body>
-    <!-- Login Page -->
-    <div id="loginPage">
-        <div class="login-box">
-            <h2>🚀 TillTrack Manager</h2>
-            <input type="text" id="phone" placeholder="Phone (e.g., +254700000001)" value="+254700000001" />
-            <input type="password" id="pin" placeholder="PIN (e.g., 1234)" value="1234" />
-            <button class="btn btn-primary" style="width: 100%" onclick="login()">
-                Login
-            </button>
-            <p id="loginError" class="error"></p>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- LOGIN PAGE                                                  -->
+<!-- ─────────────────────────────────────────────────────────── -->
+<div id="loginPage">
+    <div class="login-box">
+        <h2>🚀 TillTrack</h2>
+        <input type="text" id="phone" placeholder="Phone" value="+254700000001" />
+        <input type="password" id="pin" placeholder="PIN" value="1234" />
+        <button class="btn btn-primary" style="width: 100%" onclick="login()">Login</button>
+        <p id="loginError" class="error"></p>
+    </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────── -->
+<!-- MAIN APP                                                    -->
+<!-- ─────────────────────────────────────────────────────────── -->
+<div id="appPage" class="hidden">
+
+    <div class="header">
+        <h1>📊 TillTrack</h1>
+        <div class="user-info">
+            <span id="userName"></span>
+            <span id="userRole" class="role-badge"></span>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
         </div>
     </div>
 
-    <!-- Dashboard -->
-    <div id="dashboardPage" class="hidden">
-        <div class="header">
-            <h1>📊 TillTrack Manager Dashboard</h1>
-            <button class="btn btn-danger" onclick="logout()">Logout</button>
-        </div>
+    <div class="container">
 
-        <div class="container">
-            <!-- Summary Cards -->
+        <!-- ──────────────────────────────────────────────────── -->
+        <!-- MERCHANT VIEW                                       -->
+        <!-- ──────────────────────────────────────────────────── -->
+        <div id="merchantView" class="hidden">
+
             <div class="grid">
                 <div class="card">
-                    <h3>Today's Revenue</h3>
-                    <div class="value" id="totalRevenue">KES 0.00</div>
+                    <h3>30-Day Transactions</h3>
+                    <div class="value" id="m_txCount">0</div>
                 </div>
                 <div class="card">
-                    <h3>Transactions</h3>
-                    <div class="value" id="totalTransactions">0</div>
+                    <h3>30-Day Value</h3>
+                    <div class="value" id="m_txValue">KES 0</div>
                 </div>
-                <div class="card pending">
-                    <h3>Pending</h3>
-                    <div class="value" id="pendingCount">0</div>
+                <div class="card">
+                    <h3>Plan</h3>
+                    <div class="value" id="m_plan">—</div>
                 </div>
-                <div class="card flagged">
-                    <h3>Flagged</h3>
-                    <div class="value" id="flaggedCount">0</div>
+                <div class="card">
+                    <h3>Monthly Fee</h3>
+                    <div class="value" id="m_fee">KES 0</div>
                 </div>
             </div>
 
-            <!-- Server Performance -->
-            <h2 class="section-title">👨‍💼 Server Performance</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Server</th>
-                        <th>Sales</th>
-                        <th>Transactions</th>
-                    </tr>
-                </thead>
-                <tbody id="serverStats">
-                    <tr>
-                        <td colspan="3" style="text-align: center; color: #999">
-                            Loading...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="section">
+                <h2>⏰ Peak Hours (Last 30 Days)</h2>
+                <div id="m_peakChart" class="muted">Loading...</div>
+                <div id="m_peakLabels" class="bar-labels"></div>
+                <p style="margin-top:1rem;font-size:0.875rem;color:#666;">
+                    Peak hour: <strong id="m_peakHour">—</strong>
+                </p>
+            </div>
 
-            <!-- Flagged Transactions -->
-            <h2 class="section-title">⚠️ Flagged Transactions</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Server</th>
-                        <th>Amount</th>
-                        <th>Reason</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="flaggedTable">
-                    <tr>
-                        <td colspan="4" style="text-align: center; color: #999">
-                            No flagged transactions
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="section">
+                <h2>📈 Daily Trend (Last 30 Days)</h2>
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Transactions</th><th>Value (KES)</th></tr>
+                    </thead>
+                    <tbody id="m_dailyTrend">
+                        <tr><td colspan="3" class="muted">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
         </div>
+
+        <!-- ──────────────────────────────────────────────────── -->
+        <!-- PLATFORM ADMIN VIEW                                 -->
+        <!-- ──────────────────────────────────────────────────── -->
+        <div id="platformView" class="hidden">
+
+            <div class="grid">
+                <div class="card">
+                    <h3>Total Businesses</h3>
+                    <div class="value" id="p_totalBusinesses">0</div>
+                </div>
+                <div class="card">
+                    <h3>Active Subscriptions</h3>
+                    <div class="value" id="p_activeSubs">0</div>
+                </div>
+                <div class="card">
+                    <h3>Monthly Recurring Revenue</h3>
+                    <div class="value" id="p_mrr">KES 0</div>
+                </div>
+                <div class="card">
+                    <h3>30-Day Transactions</h3>
+                    <div class="value" id="p_txCount">0</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🏢 All Businesses</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Location</th>
+                            <th>Plan</th>
+                            <th>Monthly Fee</th>
+                            <th>30-Day Tx</th>
+                            <th>30-Day Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="p_businesses">
+                        <tr><td colspan="7" class="muted">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
     </div>
+</div>
 
-    <script>
-        // Configuration
-        const API_URL = "https://mpesa-service-backend.onrender.com";
-        let token = localStorage.getItem("token");
+<script>
+    // ──────────────────────────────────────────────────────────
+    // CONFIG
+    // ──────────────────────────────────────────────────────────
+    const API_URL = "https://mpesa-service-backend.onrender.com";
 
-        // Auto-login if token exists
-        if (token) {
-            showDashboard();
+    let token = localStorage.getItem("token");
+    let currentStaff = null;
+
+    // Auto-login if token exists
+    if (token) {
+        loadApp();
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // HELPERS
+    // ──────────────────────────────────────────────────────────
+    function formatKES(value) {
+        return "KES " + Number(value || 0).toLocaleString("en-KE", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function authHeaders() {
+        return {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        };
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // AUTH
+    // ──────────────────────────────────────────────────────────
+    async function login() {
+        const phone = document.getElementById("phone").value.trim();
+        const pin = document.getElementById("pin").value.trim();
+        const errorEl = document.getElementById("loginError");
+
+        if (!phone || !pin) {
+            errorEl.textContent = "Enter phone and PIN.";
+            return;
         }
 
-        // Login function
-        async function login() {
-            const phone = document.getElementById("phone").value.trim();
-            const pin = document.getElementById("pin").value.trim();
-            const errorEl = document.getElementById("loginError");
+        try {
+            const res = await fetch(`${API_URL}/api/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone, pin })
+            });
+            const data = await res.json();
 
-            if (!phone || !pin) {
-                errorEl.textContent = "Please enter both phone and PIN.";
+            if (res.ok) {
+                token = data.access_token;
+                currentStaff = data.staff;
+                localStorage.setItem("token", token);
+                errorEl.textContent = "";
+                loadApp();
+            } else {
+                errorEl.textContent = data.detail || "Login failed.";
+            }
+        } catch (err) {
+            errorEl.textContent = "Network error. Try again.";
+            console.error(err);
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        token = null;
+        currentStaff = null;
+        location.reload();
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // APP LOADER — decides which view to show
+    // ──────────────────────────────────────────────────────────
+    async function loadApp() {
+        // If we don't have staff yet, fetch it via a lightweight call
+        if (!currentStaff) {
+            // Use the platform overview — will succeed for admin
+            // We'll detect role from the JWT by hitting /api/insights first
+            try {
+                const res = await fetch(`${API_URL}/api/insights/my-business/summary`, {
+                    headers: authHeaders()
+                });
+                if (res.ok) {
+                    // Not a platform admin (they'd fail this call)
+                    currentStaff = { role: "manager" };
+                } else {
+                    currentStaff = { role: "platform_admin" };
+                }
+            } catch (err) {
+                console.error(err);
+                logout();
                 return;
             }
-
-            try {
-                const res = await fetch(`${API_URL}/api/auth/login`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ phone, pin }),
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    token = data.access_token;
-                    localStorage.setItem("token", token);
-                    errorEl.textContent = "";
-                    showDashboard();
-                } else {
-                    errorEl.textContent = data.detail || "Login failed. Please check your credentials.";
-                }
-            } catch (err) {
-                errorEl.textContent = "Network error. Please try again.";
-                console.error("Login error:", err);
-            }
         }
 
-        // Logout function
-        function logout() {
-            localStorage.removeItem("token");
-            token = null;
-            document.getElementById("loginPage").classList.remove("hidden");
-            document.getElementById("dashboardPage").classList.add("hidden");
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("appPage").classList.remove("hidden");
+
+        if (currentStaff.role === "platform_admin") {
+            document.getElementById("platformView").classList.remove("hidden");
+            document.getElementById("merchantView").classList.add("hidden");
+            document.getElementById("userRole").textContent = "Platform Admin";
+            document.getElementById("userName").textContent = "+254700000099";
+            loadPlatformView();
+        } else {
+            document.getElementById("merchantView").classList.remove("hidden");
+            document.getElementById("platformView").classList.add("hidden");
+            document.getElementById("userRole").textContent = "Manager";
+            document.getElementById("userName").textContent = "+254700000001";
+            loadMerchantView();
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // MERCHANT VIEW
+    // ──────────────────────────────────────────────────────────
+    async function loadMerchantView() {
+        try {
+            // 1. Summary
+            const sumRes = await fetch(`${API_URL}/api/insights/my-business/summary`, {
+                headers: authHeaders()
+            });
+            if (sumRes.status === 401) { logout(); return; }
+            const sum = await sumRes.json();
+
+            document.getElementById("m_txCount").textContent = sum.last_30_days_transactions;
+            document.getElementById("m_txValue").textContent = formatKES(sum.last_30_days_value);
+            document.getElementById("m_plan").textContent = (sum.plan || "—").toUpperCase();
+            document.getElementById("m_fee").textContent = formatKES(sum.monthly_fee);
+
+            // 2. Peak hours
+            const peakRes = await fetch(`${API_URL}/api/insights/my-business/peak-hours`, {
+                headers: authHeaders()
+            });
+            const peak = await peakRes.json();
+            renderPeakChart(peak);
+
+            // 3. Daily trend
+            const trendRes = await fetch(`${API_URL}/api/insights/my-business/daily-trend?days=30`, {
+                headers: authHeaders()
+            });
+            const trend = await trendRes.json();
+            renderDailyTrend(trend);
+
+        } catch (err) {
+            console.error("Merchant view error:", err);
+        }
+    }
+
+    function renderPeakChart(peak) {
+        const chart = document.getElementById("m_peakChart");
+        const labels = document.getElementById("m_peakLabels");
+        chart.className = "bar-chart";
+        chart.innerHTML = "";
+        labels.innerHTML = "";
+
+        const hours = peak.hours || [];
+        const maxCount = Math.max(...hours.map(h => h.count), 1);
+
+        hours.forEach(h => {
+            const bar = document.createElement("div");
+            bar.className = "bar";
+            bar.style.height = `${(h.count / maxCount) * 100}%`;
+            bar.title = `${h.hour}:00 — ${h.count} transactions`;
+            chart.appendChild(bar);
+
+            const label = document.createElement("span");
+            // Show every 4th hour to keep it readable
+            label.textContent = h.hour % 4 === 0 ? h.hour : "";
+            labels.appendChild(label);
+        });
+
+        document.getElementById("m_peakHour").textContent =
+            peak.peak_hour !== null && peak.peak_hour !== undefined
+                ? `${peak.peak_hour}:00`
+                : "—";
+    }
+
+    function renderDailyTrend(trend) {
+        const tbody = document.getElementById("m_dailyTrend");
+        const days = (trend.days || []).slice().reverse(); // newest first
+
+        if (days.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="muted">No data yet</td></tr>';
+            return;
         }
 
-        // Show dashboard
-        function showDashboard() {
-            document.getElementById("loginPage").classList.add("hidden");
-            document.getElementById("dashboardPage").classList.remove("hidden");
-            loadDashboard();
-            setInterval(loadDashboard, 15000); // refresh every 15 seconds
+        tbody.innerHTML = days.map(d => `
+            <tr>
+                <td>${d.date}</td>
+                <td>${d.count}</td>
+                <td>${formatKES(d.value)}</td>
+            </tr>
+        `).join("");
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // PLATFORM ADMIN VIEW
+    // ──────────────────────────────────────────────────────────
+    async function loadPlatformView() {
+        try {
+            const ovRes = await fetch(`${API_URL}/api/platform/overview`, {
+                headers: authHeaders()
+            });
+            if (ovRes.status === 401 || ovRes.status === 403) { logout(); return; }
+            const ov = await ovRes.json();
+
+            document.getElementById("p_totalBusinesses").textContent = ov.total_businesses;
+            document.getElementById("p_activeSubs").textContent = ov.active_subscriptions;
+            document.getElementById("p_mrr").textContent = formatKES(ov.monthly_recurring_revenue);
+            document.getElementById("p_txCount").textContent = ov.last_30_days_transactions;
+
+            const bizRes = await fetch(`${API_URL}/api/platform/businesses`, {
+                headers: authHeaders()
+            });
+            const businesses = await bizRes.json();
+            renderBusinesses(businesses);
+
+        } catch (err) {
+            console.error("Platform view error:", err);
+        }
+    }
+
+    function renderBusinesses(businesses) {
+        const tbody = document.getElementById("p_businesses");
+
+        if (!businesses || businesses.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="muted">No businesses</td></tr>';
+            return;
         }
 
-        // Load dashboard data
-        async function loadDashboard() {
-            try {
-                const res = await fetch(`${API_URL}/api/manager/dashboard`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+        tbody.innerHTML = businesses.map(b => `
+            <tr>
+                <td><strong>${b.name}</strong></td>
+                <td>${b.category || "—"}</td>
+                <td>${b.location_name || "—"}</td>
+                <td>${(b.plan || "—").toUpperCase()}</td>
+                <td>${b.monthly_fee ? formatKES(b.monthly_fee) : "—"}</td>
+                <td>${b.last_30_days_transactions}</td>
+                <td>${formatKES(b.last_30_days_value)}</td>
+            </tr>
+        `).join("");
+    }
 
-                if (!res.ok) {
-                    if (res.status === 401) {
-                        logout();
-                        return;
-                    }
-                    throw new Error(`HTTP ${res.status}`);
-                }
-
-                const data = await res.json();
-
-                // Update summary cards
-                document.getElementById("totalRevenue").textContent =
-                    `KES ${data.total_revenue_today.toFixed(2)}`;
-                document.getElementById("totalTransactions").textContent =
-                    data.total_transactions_today;
-                document.getElementById("pendingCount").textContent =
-                    data.pending_count;
-                document.getElementById("flaggedCount").textContent =
-                    data.flagged_count;
-
-                // Update server stats
-                const serverStats = document.getElementById("serverStats");
-                if (data.server_stats && data.server_stats.length > 0) {
-                    serverStats.innerHTML = data.server_stats
-                        .map(
-                            (s) => `
-                            <tr>
-                                <td><strong>${s.name}</strong></td>
-                                <td>KES ${s.total_sales.toFixed(2)}</td>
-                                <td>${s.transaction_count}</td>
-                            </tr>
-                        `
-                        )
-                        .join("");
-                } else {
-                    serverStats.innerHTML = `
-                        <tr>
-                            <td colspan="3" style="text-align:center;color:#999">
-                                No server data available
-                            </td>
-                        </tr>
-                    `;
-                }
-
-                // Update flagged transactions
-                const flaggedTable = document.getElementById("flaggedTable");
-                if (data.flagged_transactions && data.flagged_transactions.length > 0) {
-                    flaggedTable.innerHTML = data.flagged_transactions
-                        .map(
-                            (t) => `
-                            <tr>
-                                <td>${t.staff_name || "Unknown"}</td>
-                                <td>KES ${t.amount.toFixed(2)}</td>
-                                <td>${t.failure_reason || "Flagged"}</td>
-                                <td>
-                                    <button class="btn btn-warning" onclick="reconcile('${t.id}')">
-                                        Fix
-                                    </button>
-                                </td>
-                            </tr>
-                        `
-                        )
-                        .join("");
-                } else {
-                    flaggedTable.innerHTML = `
-                        <tr>
-                            <td colspan="4" style="text-align:center;color:#999">
-                                ✅ No flagged transactions
-                            </td>
-                        </tr>
-                    `;
-                }
-            } catch (err) {
-                console.error("Dashboard load error:", err);
-                // Don't logout on network errors, just retry next interval
-            }
-        }
-
-        // Reconcile a flagged transaction
-        async function reconcile(transactionId) {
-            if (!confirm("Confirm you want to fix this transaction?")) return;
-
-            try {
-                const res = await fetch(`${API_URL}/api/manager/reconcile`, {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        transaction_id: transactionId,
-                        notes: "Manually reconciled via dashboard",
-                    }),
-                });
-
-                if (res.ok) {
-                    alert("✅ Transaction reconciled successfully!");
-                    loadDashboard();
-                } else {
-                    const data = await res.json();
-                    alert(`❌ Failed: ${data.detail || "Unknown error"}`);
-                }
-            } catch (err) {
-                alert("❌ Network error. Please try again.");
-                console.error("Reconcile error:", err);
-            }
-        }
-
-        // Allow Enter key to login
-        document.addEventListener("DOMContentLoaded", () => {
-            const inputs = document.querySelectorAll("#loginPage input");
-            inputs.forEach((input) => {
-                input.addEventListener("keypress", (e) => {
-                    if (e.key === "Enter") login();
-                });
+    // ──────────────────────────────────────────────────────────
+    // ENTER KEY TO LOGIN
+    // ──────────────────────────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll("#loginPage input").forEach(input => {
+            input.addEventListener("keypress", e => {
+                if (e.key === "Enter") login();
             });
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>
