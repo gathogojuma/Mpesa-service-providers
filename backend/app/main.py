@@ -44,6 +44,30 @@ async def health_check():
 
 
 @app.get("/seed-demo-data")
+@app.get("/drop-tables")
+async def drop_tables():
+    """
+    Temporary endpoint to drop old tables. Delete this after use.
+    """
+    from sqlalchemy import text
+    db = SessionLocal()
+    dropped = []
+    try:
+        tables = ["usage_stats", "subscriptions", "staff", "businesses",
+                  "commissions", "payouts", "reconciliation_logs", "transactions"]
+        for table in tables:
+            try:
+                db.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE"))
+                dropped.append(table)
+            except Exception as e:
+                dropped.append(f"{table}: {str(e)[:50]}")
+        db.commit()
+        return {"status": "ok", "dropped": dropped}
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
 async def seed_demo_data():
     """
     Idempotent seed endpoint for the subscription-based TillTrack schema.
