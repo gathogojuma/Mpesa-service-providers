@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 
-from .api import auth, insights, platform, webhooks
+from .api import auth, insights, platform, webhooks, businesses
 from .websocket import websocket_endpoint
 from .database import engine, Base, SessionLocal
 from .models import Business, Staff, Subscription, UsageStat
@@ -25,6 +25,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(businesses.router, prefix="/api/businesses", tags=["businesses"])
 app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 app.include_router(insights.router, prefix="/api/insights", tags=["insights"])
 app.include_router(platform.router, prefix="/api/platform", tags=["platform"])
@@ -47,23 +48,12 @@ async def health_check():
 async def seed_demo_data():
     """
     Idempotent seed endpoint for the subscription-based TillTrack schema.
-
-    Creates (or updates):
-    - 1 platform admin (you, the operator)
-    - 1 demo business (a bar) with a Safaricom Till
-    - 3 staff members for the demo business (manager + 2 servers)
-    - 1 active subscription for the demo business
-    - 30 days of random usage stats so the insights look real
-
-    Safe to run multiple times.
     """
     db = SessionLocal()
     try:
         actions = []
 
-        # ─────────────────────────────────────────────────────────────
-        # 1. Platform Admin (you, the operator)
-        # ─────────────────────────────────────────────────────────────
+        # Platform Admin
         admin_phone = "+254700000099"
         admin = db.query(Staff).filter(Staff.phone == admin_phone).first()
         if not admin:
@@ -83,10 +73,8 @@ async def seed_demo_data():
             db.commit()
             actions.append(f"Platform admin already exists: {admin_phone}")
 
-        # ─────────────────────────────────────────────────────────────
-        # 2. Demo Business (a bar) with Safaricom Till
-        # ─────────────────────────────────────────────────────────────
-        demo_till = "174379"  # Safaricom sandbox test Till
+        # Demo Business
+        demo_till = "174379"
         business = db.query(Business).filter(Business.mpesa_till == demo_till).first()
         if not business:
             business = Business(
@@ -105,9 +93,7 @@ async def seed_demo_data():
         else:
             actions.append(f"Business already exists: {business.name}")
 
-        # ─────────────────────────────────────────────────────────────
-        # 3. Demo Staff (manager + servers) tied to the business
-        # ─────────────────────────────────────────────────────────────
+        # Demo Staff
         demo_staff = [
             ("Demo Manager", "+254700000001", "manager"),
             ("Demo Server 1", "+254700000002", "server"),
@@ -134,9 +120,7 @@ async def seed_demo_data():
                 db.commit()
                 actions.append(f"Created staff: {phone} ({role})")
 
-        # ─────────────────────────────────────────────────────────────
-        # 4. Subscription for the demo business
-        # ─────────────────────────────────────────────────────────────
+        # Subscription
         sub = db.query(Subscription).filter(
             Subscription.business_id == business.id
         ).first()
@@ -161,9 +145,7 @@ async def seed_demo_data():
             sub.status = "active"
             actions.append("Subscription already exists (status: active)")
 
-        # ─────────────────────────────────────────────────────────────
-        # 5. Seed 30 days of random usage stats (for realistic insights)
-        # ─────────────────────────────────────────────────────────────
+        # Usage stats
         import random
         from datetime import date, timedelta as td
 
@@ -179,7 +161,6 @@ async def seed_demo_data():
             if existing:
                 continue
 
-            # Simulate a bar's day: slow mornings, busy evenings
             hourly = {}
             for hour in range(24):
                 if 10 <= hour <= 14:
@@ -195,7 +176,6 @@ async def seed_demo_data():
             avg_amount = random.uniform(300, 900)
             total_value = round(total_count * avg_amount, 2)
 
-            # Split the totals into source breakdowns (mostly 'app' for demo)
             app_count = int(total_count * 0.7)
             c2b_count = total_count - app_count
             app_value = round(total_value * 0.7, 2)
@@ -221,9 +201,6 @@ async def seed_demo_data():
         db.commit()
         actions.append(f"Seeded {seeded_days} days of usage stats")
 
-        # ─────────────────────────────────────────────────────────────
-        # 6. Final summary
-        # ─────────────────────────────────────────────────────────────
         return {
             "status": "success",
             "actions": actions,
@@ -253,6 +230,7 @@ async def seed_demo_data():
                 "GET /api/platform/overview (platform admin only)",
                 "GET /api/platform/businesses (platform admin only)",
                 "POST /api/webhooks/mpesa/callback (M-Pesa test)",
+                "POST /api/businesses/register (new business signup)",
             ],
         }
 
