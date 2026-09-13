@@ -337,7 +337,8 @@
                 currentStaff = data.staff;
                 localStorage.setItem("token", token);
                 errorEl.textContent = "";
-                loadApp();
+                // Use setTimeout to let the DOM settle before switching views
+                setTimeout(() => loadApp(), 50);
             } else {
                 errorEl.textContent = data.detail || "Login failed.";
             }
@@ -358,41 +359,58 @@
     // APP LOADER — decides which view to show
     // ──────────────────────────────────────────────────────────
     async function loadApp() {
-        // If we don't have staff yet, fetch it via a lightweight call
+        // Make sure we're on a page that has the app UI
+        const loginPage = document.getElementById("loginPage");
+        const appPage = document.getElementById("appPage");
+
+        if (!loginPage || !appPage) {
+            // We're probably on signup.html or some other page.
+            console.warn("loadApp: expected elements not found on this page.");
+            return;
+        }
+
+        // If we don't have staff yet, try to detect role
         if (!currentStaff) {
-            // Use the platform overview — will succeed for admin
-            // We'll detect role from the JWT by hitting /api/insights first
             try {
                 const res = await fetch(`${API_URL}/api/insights/my-business/summary`, {
                     headers: authHeaders()
                 });
                 if (res.ok) {
-                    // Not a platform admin (they'd fail this call)
                     currentStaff = { role: "manager" };
-                } else {
+                } else if (res.status === 401 || res.status === 403) {
                     currentStaff = { role: "platform_admin" };
+                } else {
+                    // Unexpected — treat as logged out
+                    logout();
+                    return;
                 }
             } catch (err) {
-                console.error(err);
+                console.error("Role detection failed:", err);
                 logout();
                 return;
             }
         }
 
-        document.getElementById("loginPage").classList.add("hidden");
-        document.getElementById("appPage").classList.remove("hidden");
+        // Switch views
+        loginPage.classList.add("hidden");
+        appPage.classList.remove("hidden");
+
+        const merchantView = document.getElementById("merchantView");
+        const platformView = document.getElementById("platformView");
+        const userRole = document.getElementById("userRole");
+        const userName = document.getElementById("userName");
 
         if (currentStaff.role === "platform_admin") {
-            document.getElementById("platformView").classList.remove("hidden");
-            document.getElementById("merchantView").classList.add("hidden");
-            document.getElementById("userRole").textContent = "Platform Admin";
-            document.getElementById("userName").textContent = "+254700000099";
+            if (platformView) platformView.classList.remove("hidden");
+            if (merchantView) merchantView.classList.add("hidden");
+            if (userRole) userRole.textContent = "Platform Admin";
+            if (userName) userName.textContent = "+254700000099";
             loadPlatformView();
         } else {
-            document.getElementById("merchantView").classList.remove("hidden");
-            document.getElementById("platformView").classList.add("hidden");
-            document.getElementById("userRole").textContent = "Manager";
-            document.getElementById("userName").textContent = "+254700000001";
+            if (merchantView) merchantView.classList.remove("hidden");
+            if (platformView) platformView.classList.add("hidden");
+            if (userRole) userRole.textContent = "Manager";
+            if (userName) userName.textContent = currentStaff.phone || "+254700000001";
             loadMerchantView();
         }
     }
@@ -402,7 +420,6 @@
     // ──────────────────────────────────────────────────────────
     async function loadMerchantView() {
         try {
-            // 1. Summary
             const sumRes = await fetch(`${API_URL}/api/insights/my-business/summary`, {
                 headers: authHeaders()
             });
@@ -414,14 +431,12 @@
             document.getElementById("m_plan").textContent = (sum.plan || "—").toUpperCase();
             document.getElementById("m_fee").textContent = formatKES(sum.monthly_fee);
 
-            // 2. Peak hours
             const peakRes = await fetch(`${API_URL}/api/insights/my-business/peak-hours`, {
                 headers: authHeaders()
             });
             const peak = await peakRes.json();
             renderPeakChart(peak);
 
-            // 3. Daily trend
             const trendRes = await fetch(`${API_URL}/api/insights/my-business/daily-trend?days=30`, {
                 headers: authHeaders()
             });
@@ -436,6 +451,8 @@
     function renderPeakChart(peak) {
         const chart = document.getElementById("m_peakChart");
         const labels = document.getElementById("m_peakLabels");
+        if (!chart || !labels) return;
+
         chart.className = "bar-chart";
         chart.innerHTML = "";
         labels.innerHTML = "";
@@ -451,20 +468,24 @@
             chart.appendChild(bar);
 
             const label = document.createElement("span");
-            // Show every 4th hour to keep it readable
             label.textContent = h.hour % 4 === 0 ? h.hour : "";
             labels.appendChild(label);
         });
 
-        document.getElementById("m_peakHour").textContent =
-            peak.peak_hour !== null && peak.peak_hour !== undefined
-                ? `${peak.peak_hour}:00`
-                : "—";
+        const peakHourEl = document.getElementById("m_peakHour");
+        if (peakHourEl) {
+            peakHourEl.textContent =
+                peak.peak_hour !== null && peak.peak_hour !== undefined
+                    ? `${peak.peak_hour}:00`
+                    : "—";
+        }
     }
 
     function renderDailyTrend(trend) {
         const tbody = document.getElementById("m_dailyTrend");
-        const days = (trend.days || []).slice().reverse(); // newest first
+        if (!tbody) return;
+
+        const days = (trend.days || []).slice().reverse();
 
         if (days.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" class="muted">No data yet</td></tr>';
@@ -509,6 +530,7 @@
 
     function renderBusinesses(businesses) {
         const tbody = document.getElementById("p_businesses");
+        if (!tbody) return;
 
         if (!businesses || businesses.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="muted">No businesses</td></tr>';
