@@ -33,13 +33,26 @@ async def platform_overview(
     thirty_days_ago = today - timedelta(days=30)
 
     total_businesses = db.query(Business).count()
-    active_subscriptions = db.query(Subscription).filter(
+
+    # Subscription breakdowns
+    active_subs = db.query(Subscription).filter(
         Subscription.status == "active"
     ).count()
+    trial_subs = db.query(Subscription).filter(
+        Subscription.status == "trial"
+    ).count()
+
+    # MRR = sum of monthly_fee for ACTIVE subscriptions only
     mrr = db.query(func.coalesce(func.sum(Subscription.monthly_fee), 0)).filter(
         Subscription.status == "active"
     ).scalar()
 
+    # Potential MRR = sum of monthly_fee for TRIAL subscriptions (what they'd pay if converted)
+    potential_mrr = db.query(func.coalesce(func.sum(Subscription.monthly_fee), 0)).filter(
+        Subscription.status == "trial"
+    ).scalar()
+
+    # 30-day platform-wide usage
     usage = db.query(
         func.coalesce(func.sum(UsageStat.transaction_count), 0).label("count"),
         func.coalesce(func.sum(UsageStat.total_value), 0).label("value")
@@ -47,8 +60,10 @@ async def platform_overview(
 
     return {
         "total_businesses": total_businesses,
-        "active_subscriptions": active_subscriptions,
+        "active_subscriptions": active_subs,
+        "trial_subscriptions": trial_subs,
         "monthly_recurring_revenue": float(mrr or 0),
+        "potential_mrr_if_trials_convert": float(potential_mrr or 0),
         "last_30_days_transactions": int(usage.count or 0),
         "last_30_days_value": float(usage.value or 0),
     }
