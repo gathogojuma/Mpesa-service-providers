@@ -6,173 +6,59 @@
     <title>TillTrack Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-        }
-
-        /* ─── Header ──────────────────────────────────────────── */
-        .header {
-            background: #007b3c;
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; }
+        .header { background: #007b3c; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { font-size: 1.25rem; font-weight: 600; }
         .header .user-info { display: flex; align-items: center; gap: 1rem; font-size: 0.875rem; }
-        .header .role-badge {
-            background: rgba(255,255,255,0.2);
-            padding: 0.2rem 0.6rem;
-            border-radius: 9999px;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* ─── Container ───────────────────────────────────────── */
+        .header .role-badge { background: rgba(255,255,255,0.2); padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-
-        /* ─── Login ───────────────────────────────────────────── */
-        .login-box {
-            max-width: 400px;
-            margin: 5rem auto;
-            background: white;
-            padding: 2.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+        .login-box { max-width: 400px; margin: 5rem auto; background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .login-box h2 { text-align: center; margin-bottom: 1.5rem; color: #007b3c; }
-        .login-box input {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
+        .login-box input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
         .login-box input:focus { outline: none; border-color: #00a650; }
         .error { color: #e74c3c; text-align: center; margin-top: 1rem; font-size: 0.9rem; }
-
-        /* ─── Buttons ─────────────────────────────────────────── */
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: background 0.2s;
-        }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; transition: background 0.2s; }
         .btn-primary { background: #00a650; color: white; }
         .btn-primary:hover { background: #008c44; }
         .btn-danger { background: #e74c3c; color: white; }
         .btn-danger:hover { background: #c0392b; }
-
-        /* ─── Cards ───────────────────────────────────────────── */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-        .card h3 {
-            font-size: 0.75rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; }
+        .card h3 { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
         .card .value { font-size: 1.75rem; font-weight: bold; color: #00a650; }
-        .card.pending .value { color: #f39c12; }
-        .card.warning .value { color: #e74c3c; }
-
-        /* ─── Sections ────────────────────────────────────────── */
-        .section {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-        }
-        .section h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #333;
-        }
-
-        /* ─── Tables ──────────────────────────────────────────── */
+        .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .section h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #333; }
         table { width: 100%; border-collapse: collapse; }
-        th, td {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        th {
-            background: #f8f9fa;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: #666;
-        }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; color: #666; }
         tr:hover { background: #fafafa; }
-
-        /* ─── Bar chart (simple CSS) ──────────────────────────── */
         .bar-chart { display: flex; align-items: flex-end; gap: 2px; height: 150px; margin-top: 1rem; }
-        .bar { flex: 1; background: #00a650; border-radius: 2px 2px 0 0; min-height: 2px; position: relative; }
+        .bar { flex: 1; background: #00a650; border-radius: 2px 2px 0 0; min-height: 2px; }
         .bar:hover { background: #008c44; }
         .bar-labels { display: flex; gap: 2px; margin-top: 4px; font-size: 0.6rem; color: #999; }
         .bar-labels span { flex: 1; text-align: center; }
-
-        /* ─── Badges ──────────────────────────────────────────── */
-        .badge {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 9999px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .badge-active { background: #d4edda; color: #155724; }
-        .badge-inactive { background: #f8d7da; color: #721c24; }
-
-        /* ─── Utility ─────────────────────────────────────────── */
         .hidden { display: none !important; }
         .muted { color: #999; font-size: 0.875rem; text-align: center; padding: 1rem; }
     </style>
 </head>
 <body>
 
-<!-- ─────────────────────────────────────────────────────────── -->
-<!-- LOGIN PAGE                                                  -->
-<!-- ─────────────────────────────────────────────────────────── -->
-<div class="login-box">
-    <h2>🚀 TillTrack</h2>
-    <input type="text" id="phone" placeholder="Phone" value="+254700000001" />
-    <input type="password" id="pin" placeholder="PIN" value="1234" />
-    <button class="btn btn-primary" style="width: 100%" onclick="login()">Login</button>
-    <p id="loginError" class="error"></p>
-    <p style="text-align:center;margin-top:1rem;font-size:0.875rem;color:#666;">
-        Don't have an account? <a href="signup.html" style="color:#00a650;font-weight:600;text-decoration:none;">Sign up</a>
-    </p>
-</div>
+<!-- Login Page -->
+<div id="loginPage">
+    <div class="login-box">
+        <h2>🚀 TillTrack</h2>
+        <input type="text" id="phone" placeholder="Phone" value="+254700000001" />
+        <input type="password" id="pin" placeholder="PIN" value="1234" />
+        <button class="btn btn-primary" style="width: 100%" onclick="login()">Login</button>
+        <p id="loginError" class="error"></p>
+        <p style="text-align:center;margin-top:1rem;font-size:0.875rem;color:#666;">
+            Don't have an account? <a href="signup.html" style="color:#00a650;font-weight:600;text-decoration:none;">Sign up</a>
+        </p>
+    </div>
 </div>
 
-<!-- ─────────────────────────────────────────────────────────── -->
-<!-- MAIN APP                                                    -->
-<!-- ─────────────────────────────────────────────────────────── -->
+<!-- Main App -->
 <div id="appPage" class="hidden">
-
     <div class="header">
         <h1>📊 TillTrack</h1>
         <div class="user-info">
@@ -183,120 +69,57 @@
     </div>
 
     <div class="container">
-
-        <!-- ──────────────────────────────────────────────────── -->
-        <!-- MERCHANT VIEW                                       -->
-        <!-- ──────────────────────────────────────────────────── -->
+        <!-- Merchant View -->
         <div id="merchantView" class="hidden">
-
             <div class="grid">
-                <div class="card">
-                    <h3>30-Day Transactions</h3>
-                    <div class="value" id="m_txCount">0</div>
-                </div>
-                <div class="card">
-                    <h3>30-Day Value</h3>
-                    <div class="value" id="m_txValue">KES 0</div>
-                </div>
-                <div class="card">
-                    <h3>Plan</h3>
-                    <div class="value" id="m_plan">—</div>
-                </div>
-                <div class="card">
-                    <h3>Monthly Fee</h3>
-                    <div class="value" id="m_fee">KES 0</div>
-                </div>
+                <div class="card"><h3>30-Day Transactions</h3><div class="value" id="m_txCount">0</div></div>
+                <div class="card"><h3>30-Day Value</h3><div class="value" id="m_txValue">KES 0</div></div>
+                <div class="card"><h3>Plan</h3><div class="value" id="m_plan">—</div></div>
+                <div class="card"><h3>Monthly Fee</h3><div class="value" id="m_fee">KES 0</div></div>
             </div>
-
             <div class="section">
                 <h2>⏰ Peak Hours (Last 30 Days)</h2>
                 <div id="m_peakChart" class="muted">Loading...</div>
                 <div id="m_peakLabels" class="bar-labels"></div>
-                <p style="margin-top:1rem;font-size:0.875rem;color:#666;">
-                    Peak hour: <strong id="m_peakHour">—</strong>
-                </p>
+                <p style="margin-top:1rem;font-size:0.875rem;color:#666;">Peak hour: <strong id="m_peakHour">—</strong></p>
             </div>
-
             <div class="section">
                 <h2>📈 Daily Trend (Last 30 Days)</h2>
                 <table>
-                    <thead>
-                        <tr><th>Date</th><th>Transactions</th><th>Value (KES)</th></tr>
-                    </thead>
-                    <tbody id="m_dailyTrend">
-                        <tr><td colspan="3" class="muted">Loading...</td></tr>
-                    </tbody>
+                    <thead><tr><th>Date</th><th>Transactions</th><th>Value (KES)</th></tr></thead>
+                    <tbody id="m_dailyTrend"><tr><td colspan="3" class="muted">Loading...</td></tr></tbody>
                 </table>
             </div>
-
         </div>
 
-        <!-- ──────────────────────────────────────────────────── -->
-        <!-- PLATFORM ADMIN VIEW                                 -->
-        <!-- ──────────────────────────────────────────────────── -->
+        <!-- Platform Admin View -->
         <div id="platformView" class="hidden">
-
             <div class="grid">
-                <div class="card">
-                    <h3>Total Businesses</h3>
-                    <div class="value" id="p_totalBusinesses">0</div>
-                </div>
-                <div class="card">
-                    <h3>Active Subscriptions</h3>
-                    <div class="value" id="p_activeSubs">0</div>
-                </div>
-                <div class="card">
-                    <h3>Monthly Recurring Revenue</h3>
-                    <div class="value" id="p_mrr">KES 0</div>
-                </div>
-                <div class="card">
-                    <h3>30-Day Transactions</h3>
-                    <div class="value" id="p_txCount">0</div>
-                </div>
+                <div class="card"><h3>Total Businesses</h3><div class="value" id="p_totalBusinesses">0</div></div>
+                <div class="card"><h3>Active Subscriptions</h3><div class="value" id="p_activeSubs">0</div></div>
+                <div class="card"><h3>Monthly Recurring Revenue</h3><div class="value" id="p_mrr">KES 0</div></div>
+                <div class="card"><h3>30-Day Transactions</h3><div class="value" id="p_txCount">0</div></div>
             </div>
-
             <div class="section">
                 <h2>🏢 All Businesses</h2>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Location</th>
-                            <th>Plan</th>
-                            <th>Monthly Fee</th>
-                            <th>30-Day Tx</th>
-                            <th>30-Day Value</th>
-                        </tr>
-                    </thead>
-                    <tbody id="p_businesses">
-                        <tr><td colspan="7" class="muted">Loading...</td></tr>
-                    </tbody>
+                    <thead><tr><th>Name</th><th>Category</th><th>Location</th><th>Plan</th><th>Monthly Fee</th><th>30-Day Tx</th><th>30-Day Value</th></tr></thead>
+                    <tbody id="p_businesses"><tr><td colspan="7" class="muted">Loading...</td></tr></tbody>
                 </table>
             </div>
-
         </div>
-
     </div>
 </div>
 
 <script>
-    // ──────────────────────────────────────────────────────────
-    // CONFIG
-    // ──────────────────────────────────────────────────────────
     const API_URL = "https://mpesa-service-backend.onrender.com";
-
     let token = localStorage.getItem("token");
     let currentStaff = null;
 
-    // Auto-login if token exists
     if (token) {
         loadApp();
     }
 
-    // ──────────────────────────────────────────────────────────
-    // HELPERS
-    // ──────────────────────────────────────────────────────────
     function formatKES(value) {
         return "KES " + Number(value || 0).toLocaleString("en-KE", {
             minimumFractionDigits: 2,
@@ -311,9 +134,6 @@
         };
     }
 
-    // ──────────────────────────────────────────────────────────
-    // AUTH
-    // ──────────────────────────────────────────────────────────
     async function login() {
         const phone = document.getElementById("phone").value.trim();
         const pin = document.getElementById("pin").value.trim();
@@ -337,8 +157,7 @@
                 currentStaff = data.staff;
                 localStorage.setItem("token", token);
                 errorEl.textContent = "";
-                // Use setTimeout to let the DOM settle before switching views
-                setTimeout(() => loadApp(), 50);
+                setTimeout(() => loadApp(), 100);
             } else {
                 errorEl.textContent = data.detail || "Login failed.";
             }
@@ -355,21 +174,15 @@
         location.reload();
     }
 
-    // ──────────────────────────────────────────────────────────
-    // APP LOADER — decides which view to show
-    // ──────────────────────────────────────────────────────────
     async function loadApp() {
-        // Make sure we're on a page that has the app UI
         const loginPage = document.getElementById("loginPage");
         const appPage = document.getElementById("appPage");
 
         if (!loginPage || !appPage) {
-            // We're probably on signup.html or some other page.
-            console.warn("loadApp: expected elements not found on this page.");
+            console.warn("loadApp: expected elements not found.");
             return;
         }
 
-        // If we don't have staff yet, try to detect role
         if (!currentStaff) {
             try {
                 const res = await fetch(`${API_URL}/api/insights/my-business/summary`, {
@@ -380,7 +193,6 @@
                 } else if (res.status === 401 || res.status === 403) {
                     currentStaff = { role: "platform_admin" };
                 } else {
-                    // Unexpected — treat as logged out
                     logout();
                     return;
                 }
@@ -391,7 +203,6 @@
             }
         }
 
-        // Switch views
         loginPage.classList.add("hidden");
         appPage.classList.remove("hidden");
 
@@ -410,14 +221,11 @@
             if (merchantView) merchantView.classList.remove("hidden");
             if (platformView) platformView.classList.add("hidden");
             if (userRole) userRole.textContent = "Manager";
-            if (userName) userName.textContent = currentStaff.phone || "+254700000001";
+            if (userName) userName.textContent = (currentStaff && currentStaff.phone) || "+254700000001";
             loadMerchantView();
         }
     }
 
-    // ──────────────────────────────────────────────────────────
-    // MERCHANT VIEW
-    // ──────────────────────────────────────────────────────────
     async function loadMerchantView() {
         try {
             const sumRes = await fetch(`${API_URL}/api/insights/my-business/summary`, {
@@ -442,7 +250,6 @@
             });
             const trend = await trendRes.json();
             renderDailyTrend(trend);
-
         } catch (err) {
             console.error("Merchant view error:", err);
         }
@@ -501,9 +308,6 @@
         `).join("");
     }
 
-    // ──────────────────────────────────────────────────────────
-    // PLATFORM ADMIN VIEW
-    // ──────────────────────────────────────────────────────────
     async function loadPlatformView() {
         try {
             const ovRes = await fetch(`${API_URL}/api/platform/overview`, {
@@ -522,7 +326,6 @@
             });
             const businesses = await bizRes.json();
             renderBusinesses(businesses);
-
         } catch (err) {
             console.error("Platform view error:", err);
         }
@@ -550,9 +353,6 @@
         `).join("");
     }
 
-    // ──────────────────────────────────────────────────────────
-    // ENTER KEY TO LOGIN
-    // ──────────────────────────────────────────────────────────
     document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll("#loginPage input").forEach(input => {
             input.addEventListener("keypress", e => {
