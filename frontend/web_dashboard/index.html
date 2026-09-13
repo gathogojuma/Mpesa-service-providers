@@ -22,10 +22,10 @@
         .btn-primary:hover { background: #008c44; }
         .btn-danger { background: #e74c3c; color: white; }
         .btn-danger:hover { background: #c0392b; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; }
-        .card h3 { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
-        .card .value { font-size: 1.75rem; font-weight: bold; color: #00a650; }
+        .card h3 { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; line-height: 1.3; }
+        .card .value { font-size: 1.5rem; font-weight: bold; color: #00a650; }
         .section { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; }
         .section h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #333; }
         table { width: 100%; border-collapse: collapse; }
@@ -97,7 +97,9 @@
             <div class="grid">
                 <div class="card"><h3>Total Businesses</h3><div class="value" id="p_totalBusinesses">0</div></div>
                 <div class="card"><h3>Active Subscriptions</h3><div class="value" id="p_activeSubs">0</div></div>
+                <div class="card"><h3>Trial Businesses</h3><div class="value" id="p_trialSubs" style="color:#f39c12;">0</div></div>
                 <div class="card"><h3>Monthly Recurring Revenue</h3><div class="value" id="p_mrr">KES 0</div></div>
+                <div class="card"><h3>Potential MRR (Trials)</h3><div class="value" id="p_potentialMrr" style="color:#f39c12;">KES 0</div></div>
                 <div class="card"><h3>30-Day Transactions</h3><div class="value" id="p_txCount">0</div></div>
             </div>
             <div class="section">
@@ -318,7 +320,9 @@
 
             document.getElementById("p_totalBusinesses").textContent = ov.total_businesses;
             document.getElementById("p_activeSubs").textContent = ov.active_subscriptions;
+            document.getElementById("p_trialSubs").textContent = ov.trial_subscriptions || 0;
             document.getElementById("p_mrr").textContent = formatKES(ov.monthly_recurring_revenue);
+            document.getElementById("p_potentialMrr").textContent = formatKES(ov.potential_mrr_if_trials_convert || 0);
             document.getElementById("p_txCount").textContent = ov.last_30_days_transactions;
 
             const bizRes = await fetch(`${API_URL}/api/platform/businesses`, {
