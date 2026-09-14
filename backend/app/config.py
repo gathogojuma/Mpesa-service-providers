@@ -13,9 +13,14 @@ class Settings(BaseSettings):
     MPESA_SHORTCODE: str = "174379"
     MPESA_CALLBACK_URL: str = "http://localhost:8000/api/payments/callback"
 
-    # Timezone used for all "today"/"this week" style calculations.
-    # Defaults to East Africa Time (Kenya).
+    # Timezone
     TIMEZONE: str = "Africa/Nairobi"
+
+    # Pesapal billing
+    PESAPAL_CONSUMER_KEY: str = ""
+    PESAPAL_CONSUMER_SECRET: str = ""
+    PESAPAL_BASE_URL: str = "https://cybqa.pesapal.com/pesapalv3/api/"
+    PESAPAL_IPN_URL: str = "https://mpesa-service-backend.onrender.com/api/billing/callback"
 
     class Config:
         env_file = ".env"
