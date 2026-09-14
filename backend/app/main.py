@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 
-from .api import auth, insights, platform, webhooks, businesses
+from .api import auth, insights, platform, webhooks, businesses, billing
 from .websocket import websocket_endpoint
 from .database import engine, Base, SessionLocal
 from .models import Business, Staff, Subscription, UsageStat
@@ -29,6 +29,7 @@ app.include_router(businesses.router, prefix="/api/businesses", tags=["businesse
 app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 app.include_router(insights.router, prefix="/api/insights", tags=["insights"])
 app.include_router(platform.router, prefix="/api/platform", tags=["platform"])
+app.include_router(billing.router, prefix="/api/billing", tags=["billing"])
 
 # WebSocket endpoint
 app.add_websocket_route("/ws", websocket_endpoint)
@@ -231,6 +232,8 @@ async def seed_demo_data():
                 "GET /api/platform/businesses (platform admin only)",
                 "POST /api/webhooks/mpesa/callback (M-Pesa test)",
                 "POST /api/businesses/register (new business signup)",
+                "POST /api/billing/checkout (start payment)",
+                "GET /api/billing/status (check subscription)",
             ],
         }
 
