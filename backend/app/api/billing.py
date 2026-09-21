@@ -42,20 +42,37 @@ async def start_checkout(
     if not subscription:
         raise HTTPException(status_code=404, detail="Subscription not found")
 
-    # Generate unique merchant reference
+    # STEP 1: Register IPN with Pesapal to get a valid IPN ID
+    print("[BILLING] Registering IPN with Pesapal...")
+    ipn_id = pesapal_service.register_ipn()
+
+    if not ipn_id:
+        print("[BILLING] ERROR: Failed to register IPN")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to register IPN with Pesapal. Check backend logs for details."
+        )
+
+    print(f"[BILLING] Got IPN ID: {ipn_id}")
+
+    # STEP 2: Generate unique merchant reference
     merchant_reference = f"SUB-{uuid.uuid4().hex[:12].upper()}"
 
-    # Create the order with Pesapal
+    # STEP 3: Submit the order
+    print(f"[BILLING] Submitting order for {merchant_reference}")
     order = pesapal_service.submit_order(
         merchant_reference=merchant_reference,
         amount=subscription.monthly_fee,
         description=f"TillTrack {subscription.plan} plan - {business.name}",
         callback_url="https://mpesa-service-dashboard.onrender.com/billing-callback.html",
-        ipn_id=subscription.id,  # Using subscription ID as IPN reference
+        ipn_id=ipn_id,  # ✅ Valid IPN ID from Pesapal
     )
 
     if not order or not order.get("redirect_url"):
+        print("[BILLING] ERROR: Order submission failed")
         raise HTTPException(status_code=500, detail="Failed to create payment session")
+
+    print(f"[BILLING] SUCCESS — redirect_url: {order.get('redirect_url')}")
 
     return {
         "status": "success",
@@ -70,7 +87,6 @@ async def start_checkout(
 async def pesapal_callback(request: Request, db: Session = Depends(get_db)):
     """
     Pesapal IPN callback — receives payment notifications.
-    Pesapal sends: OrderTrackingId, OrderMerchantReference, OrderNotificationType
     """
     try:
         payload = await request.json()
@@ -80,18 +96,15 @@ async def pesapal_callback(request: Request, db: Session = Depends(get_db)):
     order_tracking_id = payload.get("OrderTrackingId")
     merchant_reference = payload.get("OrderMerchantReference")
 
+    print(f"[BILLING CALLBACK] Received: {payload}")
+
     if not order_tracking_id:
         return {"status": "ignored", "reason": "no tracking id"}
 
-    # Verify the transaction with Pesapal
     payment_status = pesapal_service.get_transaction_status(order_tracking_id)
 
     if payment_status != "COMPLETED":
         return {"status": "ignored", "reason": f"status was {payment_status}"}
-
-    # Find the business by merchant reference or order tracking
-    # Note: In production, you'd store a mapping table. For now, we log.
-    # The subscription ID was passed as ipn_id in submit_order.
 
     return {"status": "received", "order_tracking_id": order_tracking_id}
 
