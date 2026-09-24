@@ -3,8 +3,9 @@ Business onboarding endpoints.
 
 Allows a new business owner to register:
 - Their business (name, M-Pesa Till, location)
-- Their subscription (starter plan)
+- Their subscription (starter plan, free trial)
 - Their first manager account (phone + PIN)
+- Auto-generated mpesa_account_ref (e.g., TT0001)
 
 Publicly accessible (no auth required).
 """
@@ -42,6 +43,8 @@ class BusinessRegisterResponse(BaseModel):
     status: str
     message: str
     business_id: str
+    business_name: str
+    mpesa_account_ref: str
     manager_phone: str
     plan: str
     monthly_fee: float
@@ -64,7 +67,8 @@ async def register_business(
     """
     Register a new business with a manager account and starter subscription.
 
-    This is a public endpoint — no authentication required.
+    A short mpesa_account_ref (e.g., TT0001) is auto-generated. This is the
+    code customers will type when paying the business via Paybill.
     """
     try:
         result = create_business_with_manager(
@@ -85,8 +89,10 @@ async def register_business(
 
     return {
         "status": "success",
-        "message": "Business registered successfully. You can now log in.",
+        "message": f"Business registered. Your payment code is {result['account_ref']}.",
         "business_id": result["business"].id,
+        "business_name": result["business"].name,
+        "mpesa_account_ref": result["account_ref"],
         "manager_phone": result["manager"].phone,
         "plan": result["subscription"].plan,
         "monthly_fee": result["subscription"].monthly_fee,
