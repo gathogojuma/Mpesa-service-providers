@@ -4,9 +4,7 @@ Business onboarding service.
 Handles the creation of a new Business along with:
 - Its first manager account
 - An initial subscription
-
-Used by the /api/businesses/register endpoint and any future
-admin-side onboarding tools.
+- An auto-generated mpesa_account_ref (e.g. TT0001, TT0002)
 """
 from datetime import timedelta
 from sqlalchemy.orm import Session
@@ -15,6 +13,37 @@ from sqlalchemy.exc import IntegrityError
 from ..models import Business, Staff, Subscription
 from ..auth import get_password_hash
 from ..utils.timezone import now_local
+
+
+def generate_account_ref(db: Session) -> str:
+    """
+    Generate the next available mpesa_account_ref in the format TT####.
+
+    Scans existing refs starting from the highest number found.
+    Starts at TT0001 for the first business.
+
+    Collisions are handled by incrementing until a free slot is found.
+    """
+    # Find all existing refs starting with TT
+    existing = db.query(Business.mpesa_account_ref).filter(
+        Business.mpesa_account_ref.isnot(None)
+    ).all()
+
+    # Extract numeric suffixes from refs like "TT0042"
+    used_numbers = set()
+    for (ref,) in existing:
+        if ref and ref.startswith("TT") and ref[2:].isdigit():
+            try:
+                used_numbers.add(int(ref[2:]))
+            except ValueError:
+                continue
+
+    # Find the next free number starting at 1
+    next_num = 1
+    while next_num in used_numbers:
+        next_num += 1
+
+    return f"TT{next_num:04d}"
 
 
 def create_business_with_manager(
@@ -36,10 +65,14 @@ def create_business_with_manager(
     """
     Create a Business, its Subscription, and its first Manager in one transaction.
 
+    Also auto-generates an mpesa_account_ref so the business can start
+    receiving C2B payments immediately.
+
     Returns a dict with:
       - business: the created Business
       - manager:  the created Staff record
       - subscription: the created Subscription
+      - account_ref: the generated mpesa_account_ref
 
     Raises:
       ValueError: if business_name, mpesa_till, or manager_phone is invalid/duplicate
@@ -61,11 +94,15 @@ def create_business_with_manager(
     if db.query(Staff).filter(Staff.phone == manager_phone).first():
         raise ValueError(f"A user with phone {manager_phone} already exists")
 
+    # ─── Generate mpesa_account_ref ───────────────────────
+    account_ref = generate_account_ref(db)
+
     # ─── Create Business ──────────────────────────────────
     business = Business(
         name=business_name.strip(),
         phone=business_phone.strip() if business_phone else manager_phone.strip(),
         mpesa_till=mpesa_till.strip(),
+        mpesa_account_ref=account_ref,
         category=category.strip() if category else None,
         location_name=location_name.strip() if location_name else None,
         latitude=latitude,
@@ -113,4 +150,5 @@ def create_business_with_manager(
         "business": business,
         "manager": manager,
         "subscription": subscription,
+        "account_ref": account_ref,
     }
