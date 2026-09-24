@@ -19,6 +19,11 @@ class Business(Base):
     # The Safaricom Till that identifies this business (unique per business)
     mpesa_till = Column(String, unique=True, nullable=False, index=True)
 
+    # NEW: The short code customers type as BillRefNumber when paying our
+    # shared Paybill. Maps incoming payments to the correct merchant.
+    # Example: "TT0001", "TT0002"
+    mpesa_account_ref = Column(String(20), unique=True, nullable=True, index=True)
+
     category = Column(String, nullable=True)                # 'bar', 'club', 'supermarket'
     location_name = Column(String, nullable=True)           # e.g. "Westlands, Nairobi"
     latitude = Column(Float, nullable=True)
@@ -59,7 +64,7 @@ class Subscription(Base):
     plan = Column(String, nullable=False, default="starter")
     monthly_fee = Column(Float, nullable=False, default=2500.0)
     transaction_limit = Column(Integer, nullable=True)         # NULL = unlimited
-    status = Column(String, nullable=False, default="active")  # 'active', 'past_due', 'cancelled'
+    status = Column(String, nullable=False, default="active")  # 'active', 'past_due', 'cancelled', 'trial'
     current_period_start = Column(DateTime, nullable=False)
     current_period_end = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
