@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 
-from .api import auth, insights, platform, webhooks, businesses, billing
+from .api import auth, insights, platform, webhooks, businesses, billing, daraja
 from .websocket import websocket_endpoint
 from .database import engine, Base, SessionLocal
 from .models import Business, Staff, Subscription, UsageStat
@@ -12,7 +12,7 @@ from .utils.timezone import now_local
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="TillTrack API", version="2.0.0")
+app = FastAPI(title="TillTrack API", version="2.1.0")
 
 # CORS middleware
 app.add_middleware(
@@ -30,6 +30,7 @@ app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 app.include_router(insights.router, prefix="/api/insights", tags=["insights"])
 app.include_router(platform.router, prefix="/api/platform", tags=["platform"])
 app.include_router(billing.router, prefix="/api/billing", tags=["billing"])
+app.include_router(daraja.router, prefix="/api/v1/payments/daraja", tags=["daraja"])
 
 # WebSocket endpoint
 app.add_websocket_route("/ws", websocket_endpoint)
@@ -37,7 +38,7 @@ app.add_websocket_route("/ws", websocket_endpoint)
 
 @app.get("/")
 async def root():
-    return {"message": "TillTrack API v2 is running"}
+    return {"message": "TillTrack API v2.1 is running"}
 
 
 @app.get("/health")
@@ -82,6 +83,7 @@ async def seed_demo_data():
                 name="Demo Bar & Grill",
                 phone="+254700000001",
                 mpesa_till=demo_till,
+                mpesa_account_ref="TT0001",
                 category="bar",
                 location_name="Westlands, Nairobi",
                 latitude=-1.2676,
@@ -92,6 +94,11 @@ async def seed_demo_data():
             db.refresh(business)
             actions.append(f"Created business: {business.name} (Till {demo_till})")
         else:
+            # Ensure account ref is set
+            if not business.mpesa_account_ref:
+                business.mpesa_account_ref = "TT0001"
+                db.commit()
+                actions.append("Set demo merchant account ref: TT0001")
             actions.append(f"Business already exists: {business.name}")
 
         # Demo Staff
@@ -215,6 +222,7 @@ async def seed_demo_data():
                 "id": business.id,
                 "name": business.name,
                 "mpesa_till": business.mpesa_till,
+                "mpesa_account_ref": business.mpesa_account_ref,
                 "category": business.category,
                 "location": business.location_name,
             },
@@ -230,10 +238,9 @@ async def seed_demo_data():
                 "GET /api/insights/my-business/daily-trend",
                 "GET /api/platform/overview (platform admin only)",
                 "GET /api/platform/businesses (platform admin only)",
-                "POST /api/webhooks/mpesa/callback (M-Pesa test)",
+                "POST /api/v1/payments/daraja/validation (Daraja C2B validation)",
+                "POST /api/v1/payments/daraja/confirmation (Daraja C2B confirmation)",
                 "POST /api/businesses/register (new business signup)",
-                "POST /api/billing/checkout (start payment)",
-                "GET /api/billing/status (check subscription)",
             ],
         }
 
