@@ -9,32 +9,20 @@ Key responsibilities:
 4. Map BillRefNumber → Business.mpesa_account_ref.
 5. Upsert a UsageStat row for that date and increment c2b_count, c2b_value,
    transaction_count, total_value, and the hourly histogram.
-
-What we do NOT store:
-- Customer phone number (MSISDN)
-- Customer name (FirstName/MiddleName/LastName)
-- Invoice number
-- M-Pesa transaction ID (TransID) — we don't need it for aggregates
-
-If a payment arrives with an unknown BillRefNumber, we log a warning
-(without PII) and return a failure response. We do NOT create a "flagged"
-transaction — that reintroduces the exact data we deliberately removed.
 """
 import json
 from datetime import datetime, date
 from sqlalchemy.orm import Session
 
 from ..models import Business, UsageStat
-from ..schemas.daraja import C2BConfirmationRequest
+from ..schemas import C2BConfirmationRequest
 from ..utils.timezone import now_local, get_tz
 
 
 def _parse_trans_time(trans_time: str) -> datetime:
     """
-    Parse Safaricom's TransTime string (format: YYYYMMDDHHMMSS) into a
+    Parse Safaricom's TransTime string (YYYYMMDDHHMMSS) into a
     timezone-aware datetime in Africa/Nairobi.
-
-    Falls back to now_local() if parsing fails.
     """
     try:
         naive = datetime.strptime(trans_time, "%Y%m%d%H%M%S")
@@ -54,22 +42,13 @@ def process_payment_event(
     - status: "success" | "unknown_merchant" | "invalid_payload"
     - message: human-readable description
     """
-    # ─────────────────────────────────────────────────────────────
-    # 1. Extract ONLY the fields we need
-    # ─────────────────────────────────────────────────────────────
+    # 1. Extract ONLY the fields we need (NO PII)
     trans_id = payload.TransID
     trans_amount_raw = payload.TransAmount
     trans_time_raw = payload.TransTime
     bill_ref = payload.BillRefNumber
 
-    # NOTE: We deliberately do NOT read payload.MSISDN or payload.FirstName.
-    # Even though they're in the Pydantic model, we never touch them again.
-    # Pydantic has them in memory for the request scope only; they are
-    # discarded the moment this function returns.
-
-    # ─────────────────────────────────────────────────────────────
     # 2. Basic validation
-    # ─────────────────────────────────────────────────────────────
     if not bill_ref or not trans_amount_raw:
         return {
             "status": "invalid_payload",
@@ -90,15 +69,12 @@ def process_payment_event(
             "message": "TransAmount must be positive",
         }
 
-    # ─────────────────────────────────────────────────────────────
     # 3. Resolve the merchant by account reference
-    # ─────────────────────────────────────────────────────────────
     business = db.query(Business).filter(
         Business.mpesa_account_ref == bill_ref.strip().upper()
     ).first()
 
     if not business:
-        # Log without PII — only BillRefNumber and TransAmount
         print(
             f"[DARAJA] Unknown merchant ref '{bill_ref}' "
             f"for amount {trans_amount} (TransID: {trans_id})"
@@ -108,16 +84,12 @@ def process_payment_event(
             "message": f"No business with mpesa_account_ref '{bill_ref}'",
         }
 
-    # ─────────────────────────────────────────────────────────────
-    # 4. Compute the local date and hour for aggregation
-    # ─────────────────────────────────────────────────────────────
+    # 4. Compute local date and hour for aggregation
     trans_dt = _parse_trans_time(trans_time_raw)
     stat_date: date = trans_dt.date()
     hour_key = str(trans_dt.hour)
 
-    # ─────────────────────────────────────────────────────────────
     # 5. Upsert the UsageStat for (business, date)
-    # ─────────────────────────────────────────────────────────────
     stat = db.query(UsageStat).filter(
         UsageStat.business_id == business.id,
         UsageStat.stat_date == stat_date,
@@ -139,13 +111,11 @@ def process_payment_event(
         )
         db.add(stat)
 
-    # Increment aggregates
     stat.transaction_count += 1
     stat.total_value += trans_amount
     stat.c2b_count += 1
     stat.c2b_value += trans_amount
 
-    # Update the hourly histogram
     try:
         hourly = json.loads(stat.hourly_counts or "{}")
     except (ValueError, TypeError):
@@ -156,7 +126,6 @@ def process_payment_event(
     db.commit()
     db.refresh(stat)
 
-    # Log the successful aggregation (no PII)
     print(
         f"[DARAJA] Recorded C2B {trans_amount} KES for "
         f"business {business.id} (ref: {bill_ref}, "
